@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "IntelliWave ITIS",
   "short_name": "IntelliWave",
   "description": "Enterprise AI Trading Platform",
@@ -7,7 +7,6 @@
   "background_color": "#0a0f1e",
   "theme_color": "#3b82f6",
   "icons": [
-    { "src": "/favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" },
-    { "src": "/logo.png", "sizes": "180x40", "type": "image/svg+xml" }
+    { "src": "/favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" }
   ]
 }
