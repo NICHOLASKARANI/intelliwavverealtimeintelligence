@@ -7,3 +7,5 @@ dist/
 .turbo/
 docker-data/
 pnpm-lock.yaml
+.vercel
+.env*
