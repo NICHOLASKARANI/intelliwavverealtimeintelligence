@@ -1,4 +1,4 @@
-﻿import { NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { Module, Controller, Post, Get, Body, Req } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -87,9 +87,29 @@ class NotificationsController {
   @Get('unread-count') async count() { return { count: 0 }; }
 }
 
+
+@Controller()
+class RootController {
+  @Get()
+  root() {
+    return {
+      name: 'IntelliWave ITIS API',
+      version: '1.0.0',
+      status: 'operational',
+      docs: '/api/health',
+      endpoints: {
+        auth: '/api/auth/login',
+        trading: '/api/trading/positions',
+        bots: '/api/bots',
+        analytics: '/api/analytics/dashboard',
+        health: '/api/health'
+      }
+    };
+  }
+}
 @Module({
   imports: [JwtModule.register({ secret: process.env.JWT_SECRET || 'dev-secret-key-1234567890', signOptions: { expiresIn: '24h' } })],
-  controllers: [AuthController, HealthController, TradingController, BotsController, AnalyticsController, NotificationsController],
+  controllers: [RootController,AuthController, HealthController, TradingController, BotsController, AnalyticsController, NotificationsController],
 })
 class AppModule {}
 
