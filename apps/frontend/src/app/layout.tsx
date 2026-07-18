@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: { default: 'IntelliWave ITIS | Enterprise AI Trading Platform', template: '%s | IntelliWave ITIS' },

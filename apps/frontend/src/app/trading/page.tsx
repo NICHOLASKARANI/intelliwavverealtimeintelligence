@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import TradingChart from '../../components/charts/TradingChart';
 
-const TradingChart = dynamic(() => import('@/components/charts/TradingChart'), { ssr: false });
+
 
 const markets = [
   { symbol: 'Volatility 75', price: '1,234.56', change: '+2.45%', high: '1,245.00', low: '1,220.30', sentiment: 'Bullish', aiScore: 72 },
