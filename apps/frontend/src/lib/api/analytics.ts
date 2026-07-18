@@ -1,30 +1,12 @@
-// apps/frontend/src/lib/api/analytics.ts
-import { apiClient } from '../api';
+﻿import api from '../api';
 
 export const analyticsApi = {
-  getDashboard: () => apiClient.get('/analytics/dashboard'),
-  
-  getPerformanceMetrics: (params?: any) => 
-    apiClient.get('/analytics/performance', { params }),
-  
-  getEquityCurve: (days?: number) => 
-    apiClient.get('/analytics/equity-curve', { params: { days } }),
-  
-  getDailyPnL: (days?: number) => 
-    apiClient.get('/analytics/daily-pnl', { params: { days } }),
-  
-  getTradeDistribution: () => 
-    apiClient.get('/analytics/trade-distribution'),
-  
-  getBotAnalytics: () => 
-    apiClient.get('/analytics/bot-analytics'),
-  
-  getTradeCalendar: (month: number, year: number) => 
-    apiClient.get('/analytics/calendar', { params: { month, year } }),
-  
-  exportReport: (format: 'pdf' | 'csv' | 'excel', params?: any) =>
-    apiClient.get('/analytics/export', { 
-      params: { format, ...params },
-      responseType: 'blob',
-    }),
+  getDashboard: () => api.get('/analytics/dashboard'),
+  getPerformanceMetrics: (params?: any) => api.get('/analytics/performance', { params }),
+  getEquityCurve: (days?: number) => api.get('/analytics/equity-curve', { params: { days } }),
+  getDailyPnL: (days?: number) => api.get('/analytics/daily-pnl', { params: { days } }),
+  getTradeDistribution: () => api.get('/analytics/trade-distribution'),
+  getBotAnalytics: () => api.get('/analytics/bot-analytics'),
+  getTradeCalendar: (month: number, year: number) => api.get('/analytics/calendar', { params: { month, year } }),
+  exportReport: (format: string, params?: any) => api.get('/analytics/export', { params: { format, ...params }, responseType: 'blob' }),
 };
