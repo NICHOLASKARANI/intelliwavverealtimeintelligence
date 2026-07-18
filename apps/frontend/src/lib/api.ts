@@ -1,33 +1,44 @@
 ﻿import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.clear();
+      document.cookie = 'accessToken=; max-age=0; path=/';
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authApi = {
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   register: (data: any) => api.post('/auth/register', data),
   getProfile: () => api.get('/auth/profile'),
+  logout: () => api.post('/auth/logout'),
 };
 
 export const tradingApi = {
   getPositions: () => api.get('/trading/positions'),
   getOrders: () => api.get('/trading/orders'),
+  getHistory: () => api.get('/trading/history'),
   createOrder: (data: any) => api.post('/trading/orders', data),
   closePosition: (id: string) => api.post(`/trading/positions/${id}/close`),
-  getHistory: () => api.get('/trading/history'),
 };
 
 export const botApi = {
@@ -41,8 +52,14 @@ export const botApi = {
 export const analyticsApi = {
   getDashboard: () => api.get('/analytics/dashboard'),
   getPerformance: () => api.get('/analytics/performance'),
-  getEquityCurve: (days = 30) => api.get('/analytics/equity-curve', { params: { days } }),
-  getDailyPnL: () => api.get('/analytics/daily-pnl'),
+  getDailyPnL: (days = 30) => api.get('/analytics/daily-pnl', { params: { days } }),
+};
+
+export const notificationApi = {
+  getNotifications: () => api.get('/notifications'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id: string) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.post('/notifications/read-all'),
 };
 
 export default api;

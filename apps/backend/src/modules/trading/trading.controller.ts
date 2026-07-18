@@ -1,88 +1,62 @@
-// apps/backend/src/modules/trading/trading.controller.ts
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+﻿import { Controller, Get, Post, Body, UseGuards, Req, Param } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { TradingService } from './trading.service';
-import { CreateOrderDto } from './dto/trading.dto';
+import { PrismaService } from '../database/prisma.service';
 
-@ApiTags('Trading')
 @Controller('trading')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class TradingController {
-  constructor(private readonly tradingService: TradingService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  @Post('orders')
-  @ApiOperation({ summary: 'Create order' })
-  async createOrder(
-    @CurrentUser() user: any,
-    @Body() createOrderDto: CreateOrderDto,
-  ) {
-    return this.tradingService.createOrder(user.id, createOrderDto);
+  @Get('positions')
+  async getPositions(@Req() req: any) {
+    return this.prisma.position.findMany({
+      where: { userId: req.user.id, isOpen: true },
+      orderBy: { openedAt: 'desc' },
+    });
   }
 
   @Get('orders')
-  @ApiOperation({ summary: 'Get orders' })
-  async getOrders(
-    @CurrentUser() user: any,
-    @Query('status') status?: string,
-    @Query('symbol') symbol?: string,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
-  ) {
-    return this.tradingService.getOrders(user.id, { status, symbol, limit, offset });
-  }
-
-  @Get('orders/:id')
-  @ApiOperation({ summary: 'Get order by ID' })
-  async getOrder(@CurrentUser() user: any, @Param('id') id: string) {
-    return this.tradingService.getOrderById(user.id, id);
-  }
-
-  @Delete('orders/:id')
-  @ApiOperation({ summary: 'Cancel order' })
-  async cancelOrder(@CurrentUser() user: any, @Param('id') id: string) {
-    return this.tradingService.cancelOrder(user.id, id);
-  }
-
-  @Get('positions')
-  @ApiOperation({ summary: 'Get positions' })
-  async getPositions(@CurrentUser() user: any) {
-    return this.tradingService.getPositions(user.id);
-  }
-
-  @Post('positions/:id/close')
-  @ApiOperation({ summary: 'Close position' })
-  async closePosition(@CurrentUser() user: any, @Param('id') id: string) {
-    return this.tradingService.closePosition(user.id, id);
+  async getOrders(@Req() req: any) {
+    return this.prisma.order.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
   }
 
   @Get('history')
-  @ApiOperation({ summary: 'Get trade history' })
-  async getTradeHistory(
-    @CurrentUser() user: any,
-    @Query('symbol') symbol?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
-  ) {
-    return this.tradingService.getTradeHistory(user.id, {
-      symbol,
-      startDate,
-      endDate,
-      limit,
-      offset,
+  async getHistory(@Req() req: any) {
+    return this.prisma.trade.findMany({
+      where: { userId: req.user.id },
+      orderBy: { timestamp: 'desc' },
+      take: 100,
+    });
+  }
+
+  @Post('orders')
+  async createOrder(@Req() req: any, @Body() body: any) {
+    return this.prisma.order.create({
+      data: {
+        userId: req.user.id,
+        symbol: body.symbol,
+        type: body.type || 'MARKET',
+        side: body.side,
+        quantity: body.quantity,
+        price: body.price,
+      },
+    });
+  }
+
+  @Post('positions/:id/close')
+  async closePosition(@Req() req: any, @Param('id') id: string) {
+    const position = await this.prisma.position.findFirst({
+      where: { id, userId: req.user.id, isOpen: true },
+    });
+    if (!position) throw new Error('Position not found');
+    
+    return this.prisma.position.update({
+      where: { id },
+      data: { isOpen: false, closedAt: new Date() },
     });
   }
 }

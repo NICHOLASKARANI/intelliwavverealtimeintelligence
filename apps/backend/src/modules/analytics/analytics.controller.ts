@@ -1,66 +1,49 @@
-// apps/backend/src/modules/analytics/analytics.controller.ts
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+﻿import { Controller, Get, Query, UseGuards, Req } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { AnalyticsService } from './analytics.service';
+import { PrismaService } from '../database/prisma.service';
 
-@ApiTags('Analytics')
 @Controller('analytics')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   @Get('dashboard')
-  @ApiOperation({ summary: 'Get dashboard stats' })
-  async getDashboard(@CurrentUser() user: any) {
-    return this.analyticsService.getDashboardStats(user.id);
-  }
-
-  @Get('equity-curve')
-  @ApiOperation({ summary: 'Get equity curve' })
-  async getEquityCurve(
-    @CurrentUser() user: any,
-    @Query('days') days?: number,
-  ) {
-    return this.analyticsService.getEquityCurve(user.id, days);
+  async getDashboard(@Req() req: any) {
+    const [trades, positions, bots, totalPnL] = await Promise.all([
+      this.prisma.trade.count({ where: { userId: req.user.id } }),
+      this.prisma.position.count({ where: { userId: req.user.id, isOpen: true } }),
+      this.prisma.bot.count({ where: { userId: req.user.id, status: 'ACTIVE' } }),
+      this.prisma.trade.aggregate({ where: { userId: req.user.id }, _sum: { pnl: true } }),
+    ]);
+    return { totalTrades: trades, openPositions: positions, activeBots: bots, totalPnL: totalPnL._sum.pnl || 0 };
   }
 
   @Get('performance')
-  @ApiOperation({ summary: 'Get performance metrics' })
-  async getPerformance(@CurrentUser() user: any) {
-    return this.analyticsService.getPerformanceMetrics(user.id);
+  async getPerformance(@Req() req: any) {
+    const trades = await this.prisma.trade.findMany({ where: { userId: req.user.id } });
+    const winning = trades.filter(t => t.pnl > 0);
+    const winRate = trades.length > 0 ? (winning.length / trades.length) * 100 : 0;
+    const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
+    return { totalTrades: trades.length, winRate, totalPnL, winningTrades: winning.length };
   }
 
   @Get('daily-pnl')
-  @ApiOperation({ summary: 'Get daily P&L' })
-  async getDailyPnL(
-    @CurrentUser() user: any,
-    @Query('days') days?: number,
-  ) {
-    return this.analyticsService.getDailyPnL(user.id, days);
-  }
-
-  @Get('trade-distribution')
-  @ApiOperation({ summary: 'Get trade distribution' })
-  async getTradeDistribution(@CurrentUser() user: any) {
-    return this.analyticsService.getTradeDistribution(user.id);
-  }
-
-  @Get('bot-analytics')
-  @ApiOperation({ summary: 'Get bot analytics' })
-  async getBotAnalytics(@CurrentUser() user: any) {
-    return this.analyticsService.getBotAnalytics(user.id);
-  }
-
-  @Get('calendar')
-  @ApiOperation({ summary: 'Get trade calendar' })
-  async getTradeCalendar(
-    @CurrentUser() user: any,
-    @Query('month') month: number,
-    @Query('year') year: number,
-  ) {
-    return this.analyticsService.getTradeCalendar(user.id, month, year);
+  async getDailyPnL(@Req() req: any, @Query('days') days = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const trades = await this.prisma.trade.findMany({
+      where: { userId: req.user.id, timestamp: { gte: startDate } },
+      orderBy: { timestamp: 'asc' },
+    });
+    const dailyPnL: Record<string, number> = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      dailyPnL[d.toISOString().slice(0, 10)] = 0;
+    }
+    trades.forEach(t => {
+      const day = t.timestamp.toISOString().slice(0, 10);
+      dailyPnL[day] = (dailyPnL[day] || 0) + t.pnl;
+    });
+    return Object.entries(dailyPnL).map(([date, pnl]) => ({ date, pnl: Math.round(pnl * 100) / 100 })).reverse();
   }
 }
