@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -41,7 +41,7 @@ export default function BotsPage() {
           ))}
         </nav>
         <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(59,130,246,0.1)' }}>
-          <button onClick={() => { localStorage.clear(); router.push('/login'); }} style={{ width: '100%', padding: '10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: 'inherit' }}>Sign Out</button>
+          <button onClick={() => { router.push('/logout'); }} style={{ width: '100%', padding: '10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: 'inherit' }}>Sign Out</button>
         </div>
       </aside>
 

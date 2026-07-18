@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -46,7 +46,7 @@ export default function DashboardPage() {
 
   if (!mounted) return <div style={{ minHeight: '100vh', background: '#0a0f1e' }} />;
 
-  const handleLogout = () => { localStorage.clear(); document.cookie = 'accessToken=; max-age=0; path=/'; router.push('/login'); };
+  const handleLogout = () => { router.push('/logout'); };
 
   const navItems = [
     { label: 'Dashboard', icon: '◉', path: '/dashboard', active: true },
