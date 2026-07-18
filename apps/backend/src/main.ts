@@ -119,15 +119,15 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   try {
     await prisma.$connect();
-    console.log('✅ Database connected');
+    console.log('âœ… Database connected');
   } catch (e) {
-    console.log('⚠ Database connection issue:', e.message);
+    console.log('âš  Database connection issue:', e.message);
   }
   await app.listen(3001);
   console.log('');
-  console.log('🚀 Backend running on http://localhost:3001');
-  console.log('📡 Health: http://localhost:3001/api/health');
-  console.log('🔑 Login: POST http://localhost:3001/api/auth/login');
+  console.log('ðŸš€ Backend running on http://localhost:3001');
+  console.log('ðŸ“¡ Health: http://localhost:3001/api/health');
+  console.log('ðŸ”‘ Login: POST http://localhost:3001/api/auth/login');
   console.log('   Body: {"email":"demo@intelliwave.com","password":"demo123"}');
 }
 bootstrap();
