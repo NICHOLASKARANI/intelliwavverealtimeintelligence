@@ -1,12 +1,11 @@
-﻿{
-  "name": "@intelliwave/backend",
+{
+  "name": "intelliwave-backend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "nest build",
     "start": "node dist/main.js",
-    "start:dev": "nest start --watch",
-    "start:prod": "node dist/main.js"
+    "start:dev": "nest start --watch"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",
@@ -29,7 +28,6 @@
     "@nestjs/schematics": "^10.1.0",
     "@types/node": "^20.11.0",
     "@types/bcrypt": "^5.0.0",
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.0"
+    "typescript": "^5.3.3"
   }
 }
