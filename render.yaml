@@ -1,0 +1,24 @@
+﻿services:
+  - type: web
+    name: intelliwave-itis-backend
+    env: node
+    region: frankfurt
+    buildCommand: npm install && cd packages/database && npx prisma generate && cd ../../apps/backend && npm run build
+    startCommand: cd apps/backend && node dist/main.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: intelliwave-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: "3001"
+      - key: NODE_VERSION
+        value: "20.0.0"
+
+databases:
+  - name: intelliwave-db
+    databaseName: intelliwave_itis
+    user: intelliwave
+    plan: free
