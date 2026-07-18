@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  firstName     String?
+  lastName      String?
+  role          String   @default("USER")
+  status        String   @default("ACTIVE")
+  emailVerified Boolean  @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bots       Bot[]
+  trades     Trade[]
+  orders     Order[]
+  positions  Position[]
+}
+
+model Bot {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  status    String   @default("DRAFT")
+  config    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Trade {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  side      String
+  quantity  Float
+  price     Float
+  pnl       Float    @default(0)
+  timestamp DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  type      String
+  side      String
+  status    String   @default("PENDING")
+  quantity  Float
+  price     Float?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Position {
+  id         String   @id @default(cuid())
+  userId     String
+  symbol     String
+  side       String
+  quantity   Float
+  entryPrice Float
+  isOpen     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

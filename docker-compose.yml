@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: intelliwave-postgres
+    environment:
+      POSTGRES_USER: intelliwave
+      POSTGRES_PASSWORD: intelliwave123
+      POSTGRES_DB: intelliwave_itis
+      POSTGRES_MULTIPLE_DATABASES: intelliwave_itis_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/docker/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+    networks:
+      - intelliwave-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U intelliwave -d intelliwave_itis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: intelliwave-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass redispassword123
+    networks:
+      - intelliwave-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: intelliwave-redis-ui
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:redispassword123
+    ports:
+      - "8081:8081"
+    networks:
+      - intelliwave-network
+    depends_on:
+      - redis
+    profiles:
+      - tools
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: intelliwave-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@intelliwave.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - intelliwave-network
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+  backend:
+    build:
+      context: .
+      dockerfile: config/docker/Dockerfile.backend
+    container_name: intelliwave-backend
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://intelliwave:intelliwave123@postgres:5432/intelliwave_itis?schema=public
+      - REDIS_URL=redis://:redispassword123@redis:6379
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./apps/backend:/app/apps/backend
+      - /app/apps/backend/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - intelliwave-network
+    command: pnpm run dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: config/docker/Dockerfile.frontend
+    container_name: intelliwave-frontend
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/frontend:/app/apps/frontend
+      - /app/apps/frontend/node_modules
+    depends_on:
+      - backend
+    networks:
+      - intelliwave-network
+    command: pnpm run dev
+
+  connector:
+    build:
+      context: .
+      dockerfile: config/docker/Dockerfile.connector
+    container_name: intelliwave-connector
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://:redispassword123@redis:6379
+    volumes:
+      - ./apps/connector:/app/apps/connector
+      - /app/apps/connector/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - intelliwave-network
+    command: pnpm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  intelliwave-network:
+    driver: bridge

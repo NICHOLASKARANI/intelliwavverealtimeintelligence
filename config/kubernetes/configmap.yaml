@@ -1,0 +1,11 @@
+# config/kubernetes/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intelliwave-config
+  namespace: intelliwave-itis
+data:
+  NODE_ENV: "production"
+  API_URL: "https://api.intelliwave.com"
+  WS_URL: "wss://api.intelliwave.com"
+  DERIV_WS_URL: "wss://ws.derivws.com/websockets/v3"

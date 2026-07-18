@@ -1,0 +1,8 @@
+# config/kubernetes/namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: intelliwave-itis
+  labels:
+    app: intelliwave
+    environment: production

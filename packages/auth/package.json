@@ -1,0 +1,21 @@
+﻿{
+  "name": "@intelliwave/auth",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "bcrypt": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/bcrypt": "^5.0.0"
+  }
+}

@@ -1,0 +1,23 @@
+# config/docker/Dockerfile.frontend
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+FROM base AS builder
+COPY package.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm run build --filter=@intelliwave/frontend
+
+FROM base AS runner
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/frontend/.next/standalone ./
+COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
+
+USER nextjs
+EXPOSE 3000
+
+CMD ["node", "apps/frontend/server.js"]

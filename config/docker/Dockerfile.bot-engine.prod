@@ -1,0 +1,30 @@
+# config/docker/Dockerfile.bot-engine.prod
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN npm install -g pnpm@8
+
+COPY package.json pnpm-lock.yaml ./
+COPY apps/bot-engine/package.json ./apps/bot-engine/
+
+RUN pnpm install --frozen-lockfile --prod
+
+COPY . .
+
+RUN pnpm run build --filter=@intelliwave/bot-engine
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S botengine -u 1001
+
+COPY --from=builder /app/apps/bot-engine/dist ./dist
+COPY --from=builder /app/apps/bot-engine/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
+USER botengine
+
+CMD ["node", "dist/index.js"]

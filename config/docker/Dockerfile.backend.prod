@@ -1,0 +1,99 @@
+# config/docker/Dockerfile.backend.prod
+FROM node:20-alpine AS builder
+
+RUN apk add --no-cache python3 make g++ curl
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@8
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/database/package.json ./packages/database/
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/backend/package.json ./apps/backend/
+COPY apps/connector/package.json ./apps/connector/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy source files
+COPY . .
+
+# Generate Prisma client
+RUN cd packages/database && npx prisma generate
+
+# Build the application
+RUN pnpm run build --filter=@intelliwave/backend
+
+# Production image
+FROM node:20-alpine AS runner
+
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+# Copy built assets
+COPY --from=builder /app/apps/backend/dist ./dist
+COPY --from=builder /app/apps/backend/node_modules ./node_modules
+COPY --from=builder /app/packages/database/generated ./packages/database/generated
+COPY --from=builder /app/package.json ./
+
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3001
+
+USER nestjs
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3001/api/health || exit 1
+
+CMD ["node", "dist/main.js"]
+
+# config/docker/Dockerfile.frontend.prod
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN npm install -g pnpm@8
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+# Build with production optimizations
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm run build --filter=@intelliwave/frontend
+
+# Production image
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
+
+COPY --from=builder /app/apps/frontend/.next/standalone ./
+COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+USER nextjs
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000 || exit 1
+
+CMD ["node", "apps/frontend/server.js"]

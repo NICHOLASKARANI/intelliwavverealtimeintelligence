@@ -1,0 +1,24 @@
+{
+  "name": "intelliwave-itis",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:frontend": "turbo run dev --filter=@intelliwave/frontend",
+    "dev:backend": "turbo run dev --filter=@intelliwave/backend",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "db:generate": "cd packages/database && npx prisma generate",
+    "db:push": "cd packages/database && npx prisma db push",
+    "db:seed": "cd packages/database && ts-node --transpile-only prisma/seed.ts",
+    "db:studio": "cd packages/database && npx prisma studio",
+    "docker:up": "docker-compose up -d postgres redis",
+    "docker:down": "docker-compose down",
+    "setup": "pnpm install && pnpm run db:generate && pnpm run db:push"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0",
+    "typescript": "^5.3.3"
+  }
+}

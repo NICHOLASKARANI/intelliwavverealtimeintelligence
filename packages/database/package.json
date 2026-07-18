@@ -1,0 +1,29 @@
+{
+  "name": "@intelliwave/database",
+  "version": "1.0.0",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "push": "prisma db push",
+    "seed": "ts-node --transpile-only prisma/seed.ts",
+    "studio": "prisma studio",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.9.0",
+    "@nestjs/common": "^10.3.0",
+    "redis": "^4.6.12"
+  },
+  "devDependencies": {
+    "prisma": "^5.9.0",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  }
+}
